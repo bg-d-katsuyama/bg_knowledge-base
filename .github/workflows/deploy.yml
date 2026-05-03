@@ -1,0 +1,21 @@
+name: Deploy
+
+# Phase 2 以降で本番デプロイ用に有効化する。
+# 現時点ではプレースホルダ。
+#
+# 想定動作:
+# 1. main ブランチへのマージで起動
+# 2. Workload Identity Federation 経由で GCP 認証
+# 3. Cloud Run Jobs（kb-sync）と Cloud Run Service（kb-bot）をデプロイ
+
+on:
+  workflow_dispatch:   # 手動実行のみ（Phase 2 以降で push/pull_request トリガーを追加）
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    if: false   # Phase 0 段階では実行しない
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "TODO(Phase 2): Cloud Run デプロイ実装"

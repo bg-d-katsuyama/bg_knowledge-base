@@ -1,0 +1,67 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# --- 仮想環境 ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- uv ---
+.uv/
+
+# --- 環境変数・シークレット（絶対にコミット禁止） ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+service-account*.json
+gcp-credentials*.json
+slack-token*.json
+notion-token*.json
+
+# --- IDE / エディタ ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- テスト・カバレッジ ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+
+# --- Claude Code（個人作業ログ） ---
+.claude/local/
+.claude/scratch/
+
+# --- GCP・Terraform ---
+*.tfstate
+*.tfstate.backup
+.terraform/
+terraform.tfvars
+
+# --- ログ ---
+logs/
+*.log
+
+# --- 一時ファイル ---
+tmp/
+temp/
+*.tmp
