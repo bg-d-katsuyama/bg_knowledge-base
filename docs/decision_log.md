@@ -73,14 +73,15 @@
 
 ### 残タスク
 
-- [ ] T4・T9 の確定
+- [ ] TT4・T7・T8 の確定（次回久保田様との打ち合わせ）
 - [ ] GCPプロジェクト作成、サービスアカウント発行
 - [ ] Secret Manager 初期設定
 - [ ] Notionスキーマ5DBの構築（手動）
-- [ ] `uv sync --extra dev` で依存関係インストール確認
-- [ ] CI（GitHub Actions）の動作確認
+- [ ] Notionスキーマ5DBの構築（手動）
 
 ### 完了タスク
 
 - [x] GitHubリポジトリ作成
 - [x] リポジトリ初期スキャフォールド生成（2026-04-24）
+- [x] uv.lock 生成と CI 動作確認（2026-05-03）
+- [x] Lintルール調整（日本語docstring対応、Enum/datetime近代化）
