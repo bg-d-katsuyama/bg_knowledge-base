@@ -84,7 +84,10 @@ select = [
     "RUF",  # ruff-specific
 ]
 ignore = [
-    "E501",  # line-too-long（フォーマッタが処理）
+    "E501",   # line-too-long (フォーマッタが処理)
+    "RUF001", # 全角文字 (日本語ドキュメント・文字列で使用)
+    "RUF002", # 全角文字 (日本語docstringで使用)
+    "RUF003", # 全角文字 (日本語コメントで使用)
 ]
 
 [tool.ruff.format]

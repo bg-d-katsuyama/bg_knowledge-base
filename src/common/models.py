@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
-class SourceType(str, Enum):
+class SourceType(StrEnum):
     """ソース種別."""
 
     MEET = "Meet議事録"
@@ -24,7 +24,7 @@ class SourceType(str, Enum):
     OTHER = "その他"
 
 
-class ProcessingStatus(str, Enum):
+class ProcessingStatus(StrEnum):
     """処理ステータス."""
 
     PENDING = "未処理"
@@ -32,7 +32,7 @@ class ProcessingStatus(str, Enum):
     HUMAN_VERIFIED = "人検証済"
 
 
-class ConfidenceLevel(str, Enum):
+class ConfidenceLevel(StrEnum):
     """信頼度."""
 
     HIGH = "高"
