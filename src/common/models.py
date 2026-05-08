@@ -86,6 +86,24 @@ class Tag(BaseModel):
     description: str | None = None
 
 
+class SourceDocument(BaseModel):
+    """ソースから読み取った生のドキュメントを表す中間型.
+
+    Reader 層が生成し、Processor / Loader 層に渡す。
+    """
+
+    model_config = ConfigDict(frozen=False, str_strip_whitespace=True)
+
+    source_id: str
+    """ソース側の一意識別子（Notion ページ ID 等）"""
+    title: str
+    source_url: str
+    body: str
+    """抽出されたプレーンテキスト本文"""
+    last_edited_time: datetime
+    source_type: SourceType
+
+
 class KnowledgeEntry(BaseModel):
     """ナレッジエントリ（メインDB）の内部表現."""
 
@@ -95,7 +113,7 @@ class KnowledgeEntry(BaseModel):
     occurred_at: datetime
     source_type: SourceType
     source_url: HttpUrl | str
-    creator_name: str
+    creator_name: str | None = None
     related_people: list[str] = Field(default_factory=list)
     related_organizations: list[str] = Field(default_factory=list)
     related_projects: list[str] = Field(default_factory=list)
