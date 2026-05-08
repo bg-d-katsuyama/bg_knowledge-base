@@ -68,4 +68,6 @@ def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
     Returns:
         bound logger
     """
-    return structlog.get_logger(name)
+    from typing import cast as _cast
+
+    return _cast(structlog.stdlib.BoundLogger, structlog.get_logger(name))

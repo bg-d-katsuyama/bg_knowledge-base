@@ -46,6 +46,7 @@ class Settings(BaseSettings):
 
     # --- Notion ---
     notion_api_token: str = ""
+    notion_parent_page_id: str = ""
     notion_db_knowledge_entry: str = ""
     notion_db_people: str = ""
     notion_db_organization: str = ""
