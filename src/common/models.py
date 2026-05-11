@@ -126,6 +126,14 @@ class KnowledgeEntry(BaseModel):
     status: ProcessingStatus = ProcessingStatus.PENDING
     confidence: ConfidenceLevel | None = None
 
+    # Slack 連携用フィールド（メッセージ単位取り込み）
+    slack_channel: str | None = None
+    """Slack チャンネル名（例: ``400-bg-rd-method``）"""
+    slack_thread_ts: str | None = None
+    """Slack スレッドのタイムスタンプ（同一スレッド内のメッセージで共通）"""
+    slack_thread_parent_kb_id: str | None = None
+    """親メッセージの KB ページ ID（自分が親なら None）"""
+
     @property
     def external_key(self) -> str:
         """重複排除用の外部キー（SHA256）.

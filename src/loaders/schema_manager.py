@@ -54,6 +54,10 @@ class KnowledgeEntryProps:
     STATUS = "処理ステータス"
     CONFIDENCE = "信頼度"
     EXTERNAL_KEY = "外部キー"
+    # Slack 連携用プロパティ（メッセージ単位取り込み）
+    SLACK_THREAD_PARENT = "スレッド親メッセージ"
+    SLACK_CHANNEL = "Slackチャンネル"
+    SLACK_THREAD_TS = "Slackスレッド ts"
 
 
 class PersonProps:
@@ -420,6 +424,9 @@ class NotionSchemaManager:
             },
             KnowledgeEntryProps.CONFIDENCE: {"select": _select_options("高", "中", "低")},
             KnowledgeEntryProps.EXTERNAL_KEY: {"rich_text": {}},
+            # Slack 連携用（self-relation の SLACK_THREAD_PARENT は後付け追加）
+            KnowledgeEntryProps.SLACK_CHANNEL: {"rich_text": {}},
+            KnowledgeEntryProps.SLACK_THREAD_TS: {"rich_text": {}},
             SYS_CREATED_AT: {"created_time": {}},
             SYS_UPDATED_AT: {"last_edited_time": {}},
         }
@@ -445,11 +452,18 @@ class NotionSchemaManager:
         self._add_relation_property(project_ds_id, ProjectProps.PARENT, project_ds_id)
         self._add_relation_property(tag_ds_id, TagProps.PARENT, tag_ds_id)
 
-        knowledge_entry_db_id, _ = self.ensure_knowledge_entry_db(
+        knowledge_entry_db_id, knowledge_entry_ds_id = self.ensure_knowledge_entry_db(
             people_data_source_id=people_ds_id,
             organization_data_source_id=organization_ds_id,
             project_data_source_id=project_ds_id,
             tag_data_source_id=tag_ds_id,
+        )
+
+        # Slack 連携用 self-relation（KB→KB の親メッセージ）を後付け追加
+        self._add_relation_property(
+            knowledge_entry_ds_id,
+            KnowledgeEntryProps.SLACK_THREAD_PARENT,
+            knowledge_entry_ds_id,
         )
 
         logger.info("schema_build_complete")
