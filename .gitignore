@@ -47,9 +47,11 @@ htmlcov/
 coverage.xml
 *.cover
 
-# --- Claude Code（個人作業ログ） ---
+# --- Claude Code（個人作業ログ・ローカル設定） ---
 .claude/local/
 .claude/scratch/
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
 
 # --- GCP・Terraform ---
 *.tfstate
