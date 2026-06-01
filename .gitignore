@@ -29,6 +29,7 @@ service-account*.json
 gcp-credentials*.json
 slack-token*.json
 notion-token*.json
+.secrets/
 
 # --- IDE / エディタ ---
 .vscode/
@@ -67,3 +68,8 @@ logs/
 tmp/
 temp/
 *.tmp
+
+# --- マスターデータ成果物 / Drive 手動配置（README 以外は除外） ---
+output/
+data/drive_input/*
+!data/drive_input/README.md
