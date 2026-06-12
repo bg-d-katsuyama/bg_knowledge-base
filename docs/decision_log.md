@@ -145,6 +145,22 @@
 
 ---
 
+## [2026-06-12] 久保田様への運用移管を開始（移行期間・併走運用）
+
+- **背景**: ナレッジベースの運用を勝山様から運用責任者の久保田様へ移管する方針となった。久保田様は非エンジニアで Claude Code の利用経験が浅い
+- **選択肢**: (1) 即時の完全移管 / (2) 移行期間を設けた併走運用
+- **採用**: (2) 移行期間方式。当面は勝山様・久保田様の両名が操作可能とし、久保田様側で追補抽出が 1〜2 回問題なく回ることを確認してから完全移管する
+- **実施事項**:
+  - 久保田様向けセットアップ手順書（Word・v1.0）を作成（`scripts/generate_setup_guide_docx.py` で生成、`output/` に出力、勝山様から共有）
+  - `docs/runbook.md` を現行のローカル完結方式の手順に全面改訂（旧 GCP / Slack Bot 方式の手順は git 履歴参照）
+  - `CLAUDE.md` を更新（現行運用方式、Notion 読み取り専用の不変条件、移行期間体制、フェーズ表の実態反映）
+  - git 管理外の引き継ぎファイル（`logs/insights_drive.json`、`data/drive_input/` の docx、`output/` の xlsx）を zip 化
+- **残作業（勝山様）**: 久保田様への事前確認（GitHub アカウント / Claude プラン / PC の OS）、GitHub コラボレータ招待、久保田様専用 Notion トークン（読み取り専用）の発行、`.env` 設定値の安全な受け渡し、セットアップ伴走と合格判定
+- **完全移管時の TODO**: 勝山様用 Notion トークン無効化、GitHub 権限整理、体制ドキュメント更新（`docs/runbook.md` 第7章に記載）
+- **影響**: 運用主体が久保田様に移る。移行期間中の併走ルールは `docs/runbook.md` 第2章に記載
+
+---
+
 ## [2026-06-01] Drive 議事録 21 ファイルから 41 知見を抽出（ローカル完結）
 
 - **背景**: 2026-05-29 方針（外部 API 課金ゼロ・ローカル完結）の本命タスク「`data/drive_input/` のローカルファイルを Claude Code が直接抽出」を実施。前回（マニュアル v1.3 → 22 知見）に続く 2 バッチ目
@@ -407,7 +423,9 @@
 
 ## 現在のフェーズ
 
-**Phase 2 再々改訂版（土壌 R&D マスターデータ作成・外部 API 課金ゼロ・ローカル完結）進行中。Claude Code が `data/drive_input/` のローカルファイルから直接知見抽出 → xlsx 生成 → 勝山様が手動でスプレッドシートへ。GCP/Drive API/Sheets API/Anthropic API は全て不使用。Meet 連携と Slack Bot は保留**
+**Phase 2 再々改訂版（土壌 R&D マスターデータ作成・外部 API 課金ゼロ・ローカル完結）進行中。Claude Code が `data/drive_input/` のローカルファイルから直接知見抽出 → xlsx 生成 → 手動でスプレッドシートへ。GCP/Drive API/Sheets API/Anthropic API は全て不使用。Meet 連携と Slack Bot は保留**
+
+**あわせて 2026-06-12 より久保田様への運用移管（移行期間・併走運用）を開始**（下記「運用移管タスク」参照）
 
 ### 現在の Notion DB 件数（2026-05-11 マージ後）
 
@@ -434,6 +452,19 @@
 - [ ] 旧 GCP/Sheets 方式の不要ファイル物理削除（勝山様確認後）: `scripts/google_oauth_setup.py`, `scripts/sample_master_data_output.py`, `scripts/export_master_data_sample_xlsx.py`, `scripts/investigate_soil_master.py`, `docs/gcp_setup_personal_oauth.md`
 - [ ] 新規 Drive ファイル追加時の追補抽出（必要に応じて pypdf / python-pptx を `uv add`）
 - [ ] （保留）既存 KB 3,024 件の土壌タグ付き 1,099 件からの一括抽出（当面不要との久保田様判断）
+
+### 運用移管タスク（2026-06-12 開始・移行期間）
+
+- [x] **久保田様向けセットアップ手順書（Word・v1.0）作成・共有** （2026-06-12）
+- [x] **runbook.md をローカル完結方式に全面改訂** （2026-06-12）
+- [x] **CLAUDE.md 更新（不変条件・移行期間体制・フェーズ表）** （2026-06-12）
+- [x] **引き継ぎ zip 作成（insights_drive.json / docx 一式 / xlsx）** （2026-06-12）
+- [ ] 久保田様への事前確認（GitHub アカウント / Claude プラン Pro 以上 / PC が Windows か）
+- [ ] GitHub コラボレータ招待
+- [ ] 久保田様専用 Notion トークン発行（読み取り権限のみ）＋ `.env` 設定値の安全な受け渡し
+- [ ] セットアップ伴走・合格判定（docx 1 件で抽出 → xlsx 生成が勝山様環境と同等か確認）
+- [ ] 移行期間の併走運用（追補抽出 1〜2 回を久保田様主導で実施）
+- [ ] 完全移管（勝山様トークン無効化・GitHub 権限整理。`docs/runbook.md` 第7章参照）
 
 ### Phase 2 完了後の候補（保留）
 

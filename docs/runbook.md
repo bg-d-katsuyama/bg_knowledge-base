@@ -1,157 +1,115 @@
 # 運用手順書（Runbook）
 
-本ドキュメントは BG Knowledge Base の運用手順をまとめたものです。
+本ドキュメントは BG Knowledge Base の**現行運用（ローカル完結方式）**の手順をまとめたものです。
+
+> **注**: GCP / Cloud Run / Slack Bot 前提の旧方式は 2026-05-29 の方針転換（`docs/decision_log.md` 参照）で廃止されました。
+> 旧版の Runbook が必要な場合は git 履歴を参照してください。
 
 ---
 
-## 1. 定期作業
+## 1. 現行運用の全体像
 
-### 日次
-- Cloud Schedulerによる自動同期（02:00 JST）
-- エラーログの確認（Cloud Loggingで `severity>=ERROR` を確認）
+- **目的**: Google Meet 議事録（docx）やマニュアル等から土壌 R&D の知見を抽出し、マスターデータ（xlsx → スプレッドシート）として整備する
+- **方式**: 外部 API 課金ゼロ・ローカル完結。Claude Code が手元のファイルを直接読み、知見抽出から xlsx 生成までを行う
+- **Notion**: 読み取り専用。現行運用では Notion への書き込みは一切行わない
+- **使用しないもの**: GCP / Drive API / Sheets API / Anthropic API（従量課金なし。Claude のサブスクリプション内で動作）
 
-### 週次
-- Claude API の使用量・コストを `docs/api_cost_tracking.md` に記録
-- 処理ステータス「未処理」「AI加工済」のエントリ件数を確認
+### 日常運用の流れ
 
-### 月次
-- 全DB の Relation 整合性チェック（孤立ノードの検出）
-- 同名別人エントリの分離作業
+1. Google Drive から新しい議事録（.docx）をダウンロード
+2. `data/drive_input/` に配置
+3. Claude Code に知見抽出を依頼（→ `logs/insights_drive.json` に蓄積、`output/` に xlsx 生成）
+4. xlsx の内容を確認し、マスターデータのスプレッドシートへ転記
 
-### 四半期
-- 権限棚卸し（Notion / GitHub / GCP / Slack）
-- サービスアカウント鍵のローテーション
-- コスト見直しとモデル使い分けの最適化
+非エンジニア向けの詳細手順（環境構築含む）は **「BGナレッジベース_セットアップ手順書_久保田様向け」**（Word・v1.0・2026-06-12）を参照してください。
 
 ---
 
-## 2. 同期の手動実行
+## 2. 体制（移行期間・併走運用）
 
-責任者は Slack で以下のコマンドを実行できます。
-
-| コマンド | 動作 |
+| 役割 | 担当 |
 |---|---|
-| `/kb-sync notion` | Notion既存メモの同期を即時実行 |
-| `/kb-sync drive` | Google Drive同期を即時実行 |
-| `/kb-sync all` | 全ソースの同期を実行 |
-| `/kb-status` | 最終同期日時・処理件数を返す |
-| `/kb-rebuild <entry_id>` | 特定エントリの再処理 |
-| `/kb-search <query>` | 簡易検索（Phase 4） |
+| 運用責任者 | 久保田様 |
+| 開発・保守、運用サポート | 勝山様（GitHub: bg-d-katsuyama） |
 
-**実行権限**: Slackユーザーグループ `@kb-admins` のメンバーのみ。
+2026-06 より移行期間として、**勝山様・久保田様の両名が操作可能**です。併走中のルール：
 
----
-
-## 3. インシデント対応
-
-### 同期が失敗した場合
-
-1. Cloud Logging でエラー内容を確認
-2. 原因の切り分け
-   - 認証エラー → Secret Manager の値を確認
-   - レート制限 → リトライ間隔を確認、必要なら手動再実行
-   - スキーマ不整合 → Notion DB の構成を確認
-3. 必要なら `/kb-rebuild` で個別エントリを再処理
-4. インシデント内容を `docs/decision_log.md` に記録
-
-### Claude API が異常に高額になった場合
-
-1. Cloud Logging でリクエスト数を確認
-2. 無限ループや重複処理がないかチェック
-3. 必要なら Cloud Run Jobs を一時停止
-4. プロンプトキャッシング・Batch APIの設定を確認
-
-### 退職・異動時の対応フロー
-
-1. 対象者のNotion権限を削除
-2. 対象者がSlackコマンド権限保有者の場合、`@kb-admins` から除外
-3. GitHubアクセスを剥奪
-4. Secret Managerは影響なし（サービスアカウント運用のため）
+1. 作業を始める前に Slack 等で「今から KB 作業をします」と一声かける
+2. 作業の最初に `git pull`、最後に `docs/decision_log.md` への記録 + コミット + プッシュを行う
+3. Notion トークンは各自専用のものを使い、共有しない（久保田様用は読み取り権限のみで発行）
+4. 判断に迷ったら手を止めて勝山様に連絡する
 
 ---
 
-## 4. デプロイ手順
+## 3. 定常作業：新規議事録の追補抽出
 
-### 本番デプロイ
+Claude Code への依頼ベースで行います（依頼文の定型はセットアップ手順書 第12〜13章を参照）。
 
-```bash
-# main ブランチへのマージで GitHub Actions 経由で自動デプロイ
-# 手動デプロイが必要な場合のみ以下:
+1. 新しい docx を `data/drive_input/` に置く
+2. Claude Code を起動し、以下を順に依頼する
+   - 「git pull して最新の状態にしてください」
+   - 「data/drive_input の新規ファイル『（ファイル名）.docx』から土壌R&Dの知見を抽出し、既存知見（logs/insights_drive.json）と統合した xlsx を output に生成してください。Notion への書き込みは行わないでください」
+3. `output/` に生成された xlsx を開いて内容を確認する（おかしい行は Claude Code に修正を依頼）
+4. マスターデータのスプレッドシートへ転記する
+5. 「今回の作業内容を docs/decision_log.md に記録して、コミット・プッシュしてください」と依頼する
 
-gcloud auth login
-gcloud config set project ${GCP_PROJECT_ID}
+**関連スクリプト**（Claude Code が内部で使用）：
 
-# Cloud Run Jobs（バッチ）
-gcloud run jobs deploy kb-sync \
-  --source . \
-  --region asia-northeast1 \
-  --service-account kb-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-
-# Cloud Run（Slack Bot 常駐）
-gcloud run deploy kb-bot \
-  --source . \
-  --region asia-northeast1 \
-  --service-account kb-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com
-```
-
-**注意**: 本番デプロイ前は必ず以下を確認
-- [ ] テストが全て通っている（CI緑）
-- [ ] decision_log.md に変更内容を記録
-- [ ] Notion本番DBへの破壊的変更がない
-
----
-
-## 5. Secret Manager の管理
-
-### シークレットの追加
-
-```bash
-echo -n "the-secret-value" | gcloud secrets create <secret-name> \
-  --data-file=- \
-  --replication-policy=automatic
-```
-
-### シークレットの更新
-
-```bash
-echo -n "the-new-value" | gcloud secrets versions add <secret-name> \
-  --data-file=-
-```
-
-### サービスアカウントへのアクセス権付与
-
-```bash
-gcloud secrets add-iam-policy-binding <secret-name> \
-  --member="serviceAccount:kb-runner@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
-```
-
-### 管理対象シークレット一覧
-
-| Secret 名 | 用途 |
+| スクリプト | 役割 |
 |---|---|
-| `anthropic-api-key` | Claude API |
-| `notion-api-token` | Notion API |
-| `slack-bot-token` | Slack Bot |
-| `slack-signing-secret` | Slack 署名検証 |
-| `slack-app-token` | Slack Socket Mode（必要に応じて） |
+| `scripts/dump_docx.py` | docx をテキスト化 |
+| `scripts/dump_notion_page.py` | Notion ページのテキスト化（マニュアル等の抽出時） |
+| `scripts/build_master_data.py` | 知見 JSON から xlsx / csv を生成 |
+
+対応ファイル形式は docx。pdf / pptx が必要になったら `uv add pypdf python-pptx` で追加します。
 
 ---
 
-## 6. ログとモニタリング
+## 4. データの置き場所
 
-- **Cloud Logging**: 全実行ログが自動集約
-- **重要なフィルタ**:
-  - `resource.type="cloud_run_job" AND severity>=ERROR`
-  - `jsonPayload.event="claude_api_call"`（コスト追跡用）
-  - `jsonPayload.event="notion_write"`（書き込み追跡用）
+| パス | 内容 | git 管理 |
+|---|---|---|
+| `data/drive_input/` | 取り込み元の議事録 docx | 対象外（ローカルのみ） |
+| `logs/insights_drive.json` | 抽出済み知見の蓄積（正） | 対象外（ローカルのみ・要バックアップ） |
+| `logs/insights.json`, `logs/insights_all.json` | 過去の抽出中間ファイル | 対象外 |
+| `output/` | 生成した xlsx / csv | 対象外（ローカルのみ） |
+| `.env` | Notion トークン・DB ID | 対象外（共有・コミット禁止） |
+
+**注意**: git 管理外のファイルは PC 間で自動共有されません。移行期間中、追補抽出は原則どちらか一人が担当し、`logs/insights_drive.json` が二重に育たないようにしてください（担当を交代する際はファイルを受け渡す）。
 
 ---
 
-## 7. ローカル開発の安全確認
+## 5. 定期作業
 
-ローカルから本番Notionを誤って書き換えないため、以下を徹底：
+- 新規議事録が溜まったタイミングで追補抽出を実施（頻度は久保田様の判断）
+- 四半期：権限の棚卸し（Notion インテグレーション・トークン / GitHub コラボレータ）
 
-- 開発環境専用のNotion DBを別途用意（推奨）
-- `.env` の `APP_ENV=local` を確認
-- 本番DBへの書き込みコードには `if settings.app_env == "prod"` ガードを追加
+---
+
+## 6. トラブル対応
+
+| 症状 | 対処 |
+|---|---|
+| Notion で 401 / unauthorized エラー | `.env` のトークンを確認（前後の空白に注意）。インテグレーションが対象 DB に接続されているか確認。解決しなければトークン再発行 |
+| `git pull` で conflict（競合） | そのまま触らず勝山様へ連絡（併走作業がぶつかった状態） |
+| 抽出結果が明らかにおかしい | 元の docx の破損・文字化けを確認し、Claude Code に元ファイルとの突き合わせを依頼 |
+| Claude Code が応答しない・挙動が変 | Esc で中断 → `/clear` で会話リセット → 直らなければ再起動 |
+
+インシデント時の連絡先：勝山様（移行期間中）／久保田様
+
+---
+
+## 7. 完全移管時にやること（TODO）
+
+移行期間を終えて久保田様の単独運用に切り替える際に実施します。
+
+- [ ] 勝山様用 Notion トークン（インテグレーション）の無効化
+- [ ] GitHub リポジトリの権限整理（BG 側アカウントへの移管、または久保田様の admin 化）
+- [ ] `CLAUDE.md` と本 Runbook の体制・連絡先の更新
+- [ ] `docs/decision_log.md` に移管完了を記録
+
+---
+
+## 8. 保留中の旧方式（参考）
+
+Phase 2 当初の GCP / Cloud Run / Slack Bot 構成は 2026-05-29 の方針転換で廃止されました。Meet 自動連携・Slack Bot（`/kb-*` コマンド）は「必要になれば再検討」の保留扱いです（経緯は `docs/decision_log.md` を参照）。旧方式の運用手順・デプロイ手順は git 履歴上の本ファイル旧版にあります。
